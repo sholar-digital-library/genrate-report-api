@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="399b8834-7b2f-4de9-9a13-92315384f84e" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.username}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<sub-flow name="get-rented-booksSub_Flow" doc:id="e42780f7-e12a-40b9-873e-f8cc46610bda" >
+		<logger level="INFO" doc:name="Start" doc:id="cabe4d9f-a317-4aaa-b39f-a294c19dac6e" message="Enter into get rented books"/>
+		<logger level="INFO" doc:name="fetch books from db" doc:id="7ab1d20b-482d-4630-b748-065b8db6ba99" message="Fetching the books from the databse based on library code"/>
+		<db:select doc:name="Fetch the books based on library code" doc:id="39af1aa2-acc5-482a-9ff1-bb70e63c14f2" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM `books` WHERE library_code=:library_code and book_total_quantity!=book_total_available;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	library_code: vars.library_code
+}]]]></db:input-parameters>
+		</db:select>
+		<logger level="INFO" doc:name="Make choice" doc:id="96635720-dc3b-453b-9c0d-d2fc26807d5d" message="Making choice if the books are rented or not"/>
+		<choice doc:name="Choice" doc:id="5373394c-952d-4695-a1f8-f0b54994c598" >
+			<when expression="#[payload != []]">
+				<logger level="INFO" doc:name="Books found " doc:id="90496ba6-7aa1-4447-9b50-4a7f0a3466fc" message="The rented books are found"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Books not found" doc:id="cc3b67a1-a17b-4c9b-a51a-5583c741cd9e" message="The rented books are not found"/>
+				<raise-error doc:name="raise error for library not found" doc:id="f3f1a9a2-a54a-4bd4-8a00-b522bb144f6e" type="LIBRARY:NOT_FOUND" description="There is no books rented for this library !"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="End" doc:id="1430c09d-409b-4367-9698-bc14f7f18e2d" message="Return from the get rented books flow"/>
+	</sub-flow>
+</mule>

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<error-handler name="global-error-reportError_Handler" doc:id="c9956710-cf58-4971-a8ba-658b61d24a6d">
+	
+		<on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: error.description
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: error.description
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: error.description
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[405]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: error.description
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[406]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: error.description
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[415]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: error.description
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[501]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="0f0aa2f9-b657-45c4-bae4-d98b3b0c9aea" type="LIBRARY:NOT_FOUND">
+			<ee:transform doc:name="Transform Message" doc:id="01ad93dd-865c-4ee4-8fae-e6cbc2fe3103" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message : error.description
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-variable value="604" doc:name="Set Variable for status code 604" doc:id="ae729d8d-7611-49fa-9662-c9ba3502e37d" variableName="httpStatus"/>
+			<set-variable value="LIBRARY:NOT_FOUND" doc:name="Set Variable for error phase 604" doc:id="28bf9946-182a-461d-9987-c03f753cdcc1" variableName="errorPhase"/>
+		
+</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="146b379f-9fc1-445f-998a-63eb917837a2" type="SFTP:INVALID_CREDENTIALS">
+			<ee:transform doc:name="Transform Message" doc:id="b3162a52-4d33-4b91-b8b9-da063a70a28b" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message : "Connection issue please try after sometime"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-variable value="601" doc:name="Set Variable for status code 601" doc:id="04d210df-7d96-41dd-bb7e-d43125a45a14" variableName="httpStatus" />
+			<set-variable value="SFTP:INVALID_CREDENTIALS" doc:name="Set Variable for error phase 601" doc:id="7cfc3eab-9760-4199-95d9-dd8df2de327e" variableName="errorPhase" />
+		</on-error-propagate>
+	
+	<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="0dce4b21-3084-45b3-9da6-ad8aa0516728" type="USER:INVALID">
+			<ee:transform doc:name="Transform Message" doc:id="17944c63-c1a6-4617-b9f6-84df46ac39f3" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message : error.description
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-variable value="601" doc:name="Set Variable for status code" doc:id="c395e217-b8b6-41fb-a4c6-d13e2aae373d" variableName="httpStatus" />
+			<set-variable value="USER:INVALID" doc:name="Set Variable for error phase" doc:id="d50adc43-de7c-4a07-b78a-5eab66d645cb" variableName="errorPhase" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ccf6ccd3-7e01-42e4-8035-4a9275104150" type="MULE:ANY">
+			<choice doc:name="Choice" doc:id="472bee4c-4442-42ee-b9f8-38041dd2c340" >
+				<when expression="#[error.description as String contains('655')]">
+					<ee:transform doc:name="Transform Message" doc:id="9abe1bc3-24cf-4c58-b5e0-7b35354aeeff">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message : "your login session expired, login again !"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+					<set-variable value="655" doc:name="Set Variable for status code" doc:id="7cbc3777-4230-42d7-b903-ca1072316eb9" variableName="httpStatus" />
+					<set-variable value="UNAUTHORIZED" doc:name="Set Variable for error phase" doc:id="36951a93-ef40-4faf-b39c-49423e94db17" variableName="errorPhase" />
+				</when>
+				<otherwise >
+					<ee:transform doc:name="Transform Message" doc:id="479b1b6f-ee9e-41ce-99c3-139d2a681907" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message : error.description
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</otherwise>
+			</choice>
+		</on-error-propagate>
+</error-handler>
+</mule>

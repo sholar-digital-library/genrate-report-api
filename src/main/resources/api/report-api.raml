@@ -1,0 +1,30 @@
+#%RAML 1.0
+title: report-api
+
+description: This api is for genrate the report based on library code which includes the library details and rented books of that library
+
+baseUri: http://localhost:8083/scholar-digital-library
+
+traits:
+  library-code-qp : !include exchange_modules/d2b7b596-411c-4921-ab42-736e52d9dab1/library-code/1.0.0/library-code.raml
+
+  error-response : !include exchange_modules/d2b7b596-411c-4921-ab42-736e52d9dab1/library-error-response/1.0.0/library-error-response.raml
+
+  security-schema : !include exchange_modules/d2b7b596-411c-4921-ab42-736e52d9dab1/custome-security-schema/1.0.0/custome-security-schema.raml
+
+uses:
+  Lib: exchange_modules/d2b7b596-411c-4921-ab42-736e52d9dab1/report-library/1.0.0/report-library.raml
+
+/report:
+  get:
+    is:
+      [error-response,library-code-qp,security-schema]
+    responses:
+      200:
+        body:
+          application/json:
+            type: Lib.report-reponse
+            example: !include examples/report-response.json
+              
+
+  

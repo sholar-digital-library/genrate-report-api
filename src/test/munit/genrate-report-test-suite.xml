@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="genrate-report-test-suite.xml" />
+	<munit:test name="genrate-report-test-suite-get:\report:report-api-configTest" doc:id="0a40a478-e205-498b-9cc0-23daabe9575d" description="Report genrated based on library code success">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when validating user" doc:id="330f2320-b6e8-4a1e-8836-d6911f342227" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="f3415ee9-f3aa-4e96-8696-5e43c7808fd3" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="user_data" value="#[readUrl('classpath://validate user-ADMIN.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when select rented books" doc:id="c9200562-1dca-43ac-a030-d287d5697fca" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="39af1aa2-acc5-482a-9ff1-bb70e63c14f2" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://get-rented-book.dwl')]" mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when sftp server" doc:id="a6b031e8-9d05-4071-91ad-2659b619511f" processor="sftp:write">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="9ddc3cf1-895d-4b54-aea7-d2d7d856a7f3" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event for genrate report" doc:id="a1d1ed8f-1ade-4fc0-b287-60225f08d04e" >
+				<munit:attributes value="#[{queryParams: {library_code:'LID103'}}]" encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to get:\report:report-api-config" doc:id="b07b7391-088c-4d08-952a-9328bf527e25" name="get:\report:report-api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="Assert equals for  report" doc:id="c94a22c0-1be2-4a7a-b9aa-baf9908caa46" actual="#[payload.message]" expected="#['Report genrated for LID103']" message="report success"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="genrate-report-test-suiteTest" doc:id="ce07ab2e-b146-48be-8614-66c31edec0d0" description="While genrating report based on library code the invaid user raied" expectedErrorType="USER:INVALID" expectedErrorDescription="You don't have access :(">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when validating user" doc:id="e054ea8f-dae7-47cf-8f6f-bb9b74668553" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="f3415ee9-f3aa-4e96-8696-5e43c7808fd3" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="user_data" value="#[readUrl('classpath://validate user-STUDENT.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event for genrate report" doc:id="ad9d130a-7676-418e-8962-74321b900b72" >
+				<munit:attributes value="#[{queryParams: {library_code:'LID103'}}]" encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to get:\report:report-api-config" doc:id="fbaabf99-1b45-4f46-b241-076fc857d3f6" name="get:\report:report-api-config" />
+		</munit:execution>
+	</munit:test>
+	<munit:test name="genrate-report-test-suiteTest1" doc:id="2975a2d5-54d8-4086-afba-9932021e2847" description="While genrating report based on library code library:notfound error raised" expectedErrorType="LIBRARY:NOT_FOUND" expectedErrorDescription="There is no books rented for this library !">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when validating user" doc:id="a20015b4-075b-41ef-b4f1-241bc336b77b" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="f3415ee9-f3aa-4e96-8696-5e43c7808fd3" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="user_data" value="#[readUrl('classpath://validate user-ADMIN.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when select rented books" doc:id="ba485f04-8d62-402d-af3f-e6153eead090" processor="db:select" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="39af1aa2-acc5-482a-9ff1-bb70e63c14f2" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[[]]" mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event for genrate report" doc:id="d914cfb2-2baf-46ec-9376-e83eb62b0595" >
+				<munit:attributes value="#[{queryParams: {library_code:'LID103'}}]" encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to get:\report:report-api-config" doc:id="f0f45d6f-e436-4c93-8005-898c9296733e" name="get:\report:report-api-config" />
+		</munit:execution>
+	</munit:test>
+	<munit:test name="genrate-report-test-suiteTest2" doc:id="2e2988f3-1077-4534-b36d-007fe9c19f6c" description="While genrating report based on the library code sftp connection error" expectedErrorType="SFTP:INVALID_CREDENTIALS">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when validating user" doc:id="e09b54a2-34af-419d-82fd-5b6b371f95b5" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="f3415ee9-f3aa-4e96-8696-5e43c7808fd3" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:variables >
+						<munit-tools:variable key="user_data" value="#[readUrl('classpath://validate user-ADMIN.dwl')]" mediaType="application/java" encoding="UTF-8" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when select rented books" doc:id="999524ff-ce8d-404f-9b29-016a68640461" processor="db:select" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="39af1aa2-acc5-482a-9ff1-bb70e63c14f2" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://get-rented-book.dwl')]" mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event for genrate report" doc:id="69c57ef5-6f6e-4fe0-9afd-bd60bb867226" >
+				<munit:attributes value="#[{queryParams: {library_code:'LID103'}}]" encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to get:\report:report-api-config" doc:id="b0179f31-b646-4f57-9dd3-e81d3001216d" name="get:\report:report-api-config" />
+		</munit:execution>
+	</munit:test>
+	<munit:test name="genrate-report-test-suiteTest3" doc:id="f3b82b81-999b-41af-b7e3-2acbca918fd3" description="While genrating report based on library code the mule :any that is session expire error raise" expectedErrorType="MULE:ANY">
+		<munit:execution >
+			<munit:set-event doc:name="Set Event for genrate report" doc:id="dee7659d-6f9b-4140-8dac-eaaca1f6faa6" >
+				<munit:attributes value="#[{queryParams: {library_code:'LID103'}}]" encoding="UTF-8" mediaType="application/java" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to get:\report:report-api-config" doc:id="64a2a9cd-e56d-46cf-be9f-0944c560582d" name="get:\report:report-api-config" />
+		</munit:execution>
+	</munit:test>
+
+
+</mule>

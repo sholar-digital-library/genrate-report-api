@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	
+	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="0f958158-d277-4c5d-90de-9946555d82fe" >
+		<sftp:connection workingDir="${sftp.directory}" host="${sftp.host}" port="${sftp.port}" username="${sftp.username}" password="${sftp.password}" />
+	</sftp:config>
+	<http:request-config name="HTTP_Request_configuration_for_user_validate" doc:name="HTTP Request configuration" doc:id="373b9336-5269-4b38-af08-4b2e421ceb68" basePath="/${user-process-api.base_path}" >
+		<http:request-connection host="${user-process-api.host}" port="${user-process-api.port}" />
+	</http:request-config>
+	<flow name="get:\report:report-api-config">
+        <logger level="INFO" doc:name="Start" doc:id="53f0f79a-d9a7-4ab3-80a9-6cf7c6cd990b" message="Enter into genrate report flow"/>
+		<logger level="INFO" doc:name="Set variable for library code" doc:id="c3ac5e31-c405-43a0-b63b-134024a4ec9b" message="Setting library code as variable from queryparam"/>
+		<set-variable value="#[attributes.queryParams.library_code]" doc:name="Set Variable for library_code" doc:id="4547714f-9422-41bc-a5f2-d57b82e3cb51" variableName="library_code"/>
+		<logger level="INFO" doc:name="Validating user" doc:id="25d01101-2e36-4fbc-84aa-92fa16e76d9e" message="Request for validate user"/>
+		<http:request method="GET" doc:name="Request for validate user" doc:id="f3415ee9-f3aa-4e96-8696-5e43c7808fd3" config-ref="HTTP_Request_configuration_for_user_validate" path="/${user-process-api.validate-user}" target="user_data">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_secret" : "Value",
+	"client_id" : "Value"
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"corelation-id" : attributes.headers."correlation-id"
+}]]]></http:query-params>
+		</http:request>
+		<choice doc:name="Choice" doc:id="324fbb6e-65e4-4fd8-af54-3fcd104b627a" >
+			<when expression="upper(vars.user_data.user_role) == 'ADMIN'">
+				<logger level="INFO" doc:name="Role of user" doc:id="c4839cf0-dcec-4fad-9cf2-fc86e52401e4" message="user role is ADMIN"/>
+				<logger level="INFO" doc:name="Rerquest for rented books " doc:id="c9eb5505-0b54-4451-ac64-e751bac0b1da" message="Requesting the rented books based on library code" />
+				<flow-ref doc:name="Calling fetch rented books flow" doc:id="6d7b9f50-afc5-47da-9e6c-af10819127a3" name="get-rented-booksSub_Flow" target="rented_book_details" />
+				<logger level="INFO" doc:name="Books get from flow" doc:id="d877faec-5d43-4505-86eb-f27aa836849e" message="The rented books are fetched fro the flow" />
+				<logger level="INFO" doc:name="Convert to xlsx" doc:id="d9a8846d-c5e7-4b18-95fd-14e447070888" message="Converting the books data into xlsx formate and genrate the file name" />
+				<ee:transform doc:name="Transform Message" doc:id="0c4f4aad-af57-4fdf-8feb-49d7f464b2ca">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/xlsx
+---
+{
+	Sheet1: vars.rented_book_details map ((item, index) -> {
+		book_code: item.book_code,
+		title: item.book_title,
+		author: item.book_author,
+		book_category: item.book_category,
+		read_time_hrs: item.book_read_time_hours,
+		rental_price: item.book_rental_price,
+		rating: item.book_rating,
+		best_seller: item.book_is_best_seller
+	})
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="file_name"><![CDATA[%dw 2.0
+output application/java
+---
+'Report-' ++ vars.rented_book_details[0].library_code ++ '-' ++ now() as String ++ '.xlsx']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<logger level="INFO" doc:name="Conertion completed" doc:id="9140686c-9086-4b63-b801-294fe993d7c4" message="Data transformation is completed from java to xlsx" />
+				<logger level="INFO" doc:name="Writing in sftp server" doc:id="c7bac68e-e893-4213-99a4-8464efbe2b86" message="genrating the file in sftp server" />
+				<sftp:write doc:name="Write" doc:id="9ddc3cf1-895d-4b54-aea7-d2d7d856a7f3" config-ref="SFTP_Config" path="#[vars.file_name]" mode="CREATE_NEW" />
+				<logger level="INFO" doc:name="Writing completed" doc:id="a539706f-ef06-4208-b331-c49e63b0b54c" message="The file has been genrated into the sftp server" />
+				<logger level="INFO" doc:name="Setting response" doc:id="8dda8d75-dd33-4e1e-8947-bd5e94638a20" message="Setting the response " />
+				<ee:transform doc:name="Transform Message" doc:id="b48e0974-c899-440d-ae87-bebaff615a15">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	file_name: vars.file_name,
+	message: 'Report genrated for ' ++ vars.rented_book_details[0].library_code
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Role of user" doc:id="5f58f644-3d4f-41b0-99a3-a91ad694f764" message="user role is STUDENT or USER"/>
+				<raise-error doc:name="Raise error for invalid user" doc:id="ccf74d0f-5327-4fce-992a-f8b5f24e2ebc" type="USER:INVALID" description="You don't have access :("/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="End" doc:id="118e4a88-d41a-4d4e-a90b-56c5d7232418" message="Return from the genrate report flow"/>
+    
+</flow>	
+	
+</mule>
